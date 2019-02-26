@@ -13,6 +13,9 @@ KSE requires quite a few perl modules, so install all of the following using the
 The following modules are needed for KSE to run and build properly
 
 * [Data::Lazy][2]
+* [Getopt::ArgvFile][10]
+* [Module::ScanDeps][11]
+* [PAR::Packer][12]
 * [Tk][3]
 * [Tk::Autoscroll][4]
 * [Tk::DynaTabFrame][5]
@@ -50,3 +53,6 @@ $ gmake install
 [7]: https://metacpan.org/pod/Win32::FileOp
 [8]: https://deadlystream.com/profile/9107-fair-strides/
 [9]: https://gitlab.com/pazuzu156
+[10]: https://metacpan.org/pod/Getopt::ArgvFile
+[11]: https://metacpan.org/pod/Module::ScanDeps
+[12]: https://metacpan.org/pod/PAR::Packer
