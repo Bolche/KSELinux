@@ -1,0 +1,65 @@
+# v2.0.0 6/15/04 Complete re-write to make use of new GFF/ERF functions
+#                added appearance and name change for NPC
+# v2.0.1 6/17/04 Added Inventory widgets
+# v2.0.2 6/17/04 Added Portraits for NPC, changed Inventory list to TList
+#                  read items from override
+# v2.0.3 6/17/04 Added ability to read from override appearance/portraits
+# v2.0.4 6/17/04 Updated TwoDA module to not return blank, fixed bugs with
+#                 position, orientation in inventory editing
+# v2.0.5 6/19/04 Fixed bugs regarding BodyVariation, TextureVar in inventory editing
+# v2.0.6 6/21/04 Added error handling (Tk::Error) and fixed AREANAME bug
+# v2.0.7 6/23/04 Changed handling of "KSE alternate" now dependent on Perl/Tk install version
+#                also made handling of custom .uti files more robust (use of $lilhash variable)
+# v2.0.8 8/12/04 (by Darth333) added Soundset file manipulation capability
+
+# v2.1.0 9/1/04  Added Inventory Copy/Paste popup menu
+# v2.1.1 9/1/04  Added ability to right click inventory node as well
+# v2.2.0 12/18/04 Added generation of Xbox .sig files (not SAVE_HEADER though)
+# v3.0.0 2/11/05 Added initial support for TSL
+# v3.0.1-3.0.3 various debug
+# v3.0.4 2/12/05 - Initial release
+# v3.0.5 2/13/05 - Added popup for specifying file paths
+# v3.0.6 2/13/05 - Added influence
+# v3.0.7 2/15/05 - Added fix for xbox users : dataxbox folder
+# v3.0.8 2/15/05 - Added UpgradeLevel and UpgradeLevelSlot# to .uti addition routine for TSL
+# v3.0.9 2/15/05 - Fixed influence bug
+# v3.0.10 2/20/05 -  Fixed KotOR1 class bug
+# v3.0.11 2/20/05 - Changed button toggles on inventory stacking to a textbox.
+#                   Removed widgets if Apply button clicked with stack of 0
+# v3.0.11s 2/20/05 - (stealth release) Replaced all Bioware::TwoDA::get_two_rows_and_1stcol functions with $twoda_obj->read2da methods
+# v3.2.0  2/22/05 - Fixed AVAILNPC assumption that NPCs would have only 1 digit following them.
+# v3.2.1 2/23/05  - Made spells and feats descriptive and added short feats/spells lists for TSL
+# v3.2.2 2/25/05  - Fixed bug where 'short list' of TSL powers was not displaying or adding powers correctly
+# v3.2.3 2/26/05  - Handles 2da<->TLK files problems more explicitly with TLK.pm upgrade 0.02
+# v3.2.4 2/27/05  - Fixed 2DA bug caused by reading the file in text mode.
+# v3.2.5 3/6/05   - Fixed PC Name to work properly for TSL (partytable.res)
+# v3.2.6 3/6/05   - Fixed PC Name to work properly for TSL (savenfo.res)
+# v3.2.7 3/23/05  - Added Chemicals and Components to list
+# v3.2.8 3/31/05  - Added ability to show portraits
+# v3.2.9 4/1/05   - Added abiltiy to show item icons
+# v3.2.10 4/2/05  - Fixed bug where baseitems.2da not read from override in TSL.
+#                 - Added ability to read .tga files from override folder for portraits and items
+# v3.2.11 4/3/05  - Added ability to see icons of .uti files (more of a bug fix than an addition)
+#                 - removed logging of feats
+# v3.2.12 4/3/05  - Added ability to see feats' and powers' icons
+# v3.3.0  4/8/05  - Added Journal Entries
+# v3.3.1  4/9/05  - Fixed bug where not all journal entries were being highlighted blue
+#                   Fixed bug where customized global.jrl files (localized strings) weren't displaying properly
+#                   Added Current Party editing
+# v3.3.2 4/15/05  - Fixed a very long standing bug that prevented the display of some global numerics
+#                   Made Quests start in collapsed view instead of expanded
+#                   Sig file creation is now dependent on the pre-existence of sig files.
+# v3.3.3 9/10/05  - Bound data files to executable for X-box users
+#                 - Happy Birthday Darth333.  This version is for you. :-)
+# v3.3.4 3/28/13  - New version by Fair Strides to add functionality for The Jedi Masters(TJM), made by Trex at LF.
+#		    This will hopefully remove the need swap out the paths between TSL and TJM.
+#		  - Fair Strides also made it possible to refresh your saved games without having
+#		    to restart KSE. Hopefully, this can be done while the game is running...
+#		  - Fair Strides also implemented a scrolling method similar to one used by Notepad.
+#		    It works for the appearance, portrait, soundset, feat, power, journal, and inventory.
+# 	9/1/2013-
+#	11/5/2013 - Fair Strides added the use of the Enter/Return key for all text widgets and the journal entries.
+#		  - Fair Strides also added an entry box when adding items to the inventory, to add to the stack,
+#		    instead of being stuck with one of the added item.
+#		  - Fair Strides fixed, restored, and enhanced the add/subtract feature when editing the stack size
+#		    for inventory items.
