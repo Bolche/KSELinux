@@ -1,0 +1,3 @@
+[submodule "kpf-qt"]
+	path = kpf-qt
+	url = https://gitlab.com/kotorsge-team/kpf-qt
