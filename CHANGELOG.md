@@ -2,6 +2,11 @@
 
 This is the new KSE changelog, and all changes will be placed here from now on. To view the old changelog, please refer to [HISTORICAL_CHANGELOG](https://gitlab.com/kotorsge-team/kse/blob/master/HISTORICAL_CHANGELOG)
 
+## 3.3.7e (2019-07-13)
+
+No real changes to KSE, but KPF's building has changed, and is now 32 bit with MSVC  
+The redist package is included with KSE for KPF, direct from Qt, so it should work fine
+
 ## 3.3.7d (2019-02-25)
 
 * Added Menubar to the main window.
