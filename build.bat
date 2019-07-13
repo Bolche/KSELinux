@@ -26,7 +26,7 @@ echo Compiling KPF
 cd %HERE%\kpf-qt
 call build.bat -b
 cd %HERE%
-robocopy "%HERE%\kpf-qt\bin\win64" "%HERE%\dist" /E /XF FILE .gitkeep ^
+robocopy "%HERE%\kpf-qt\bin\windows" "%HERE%\dist" /E /XF FILE .gitkeep ^
 /XF FILE setup.iss /NFL /NDL /NJH /NJS /nc /ns /np
 copy /Y kse.exe dist\kse.exe
 echo KSE Build complete!
