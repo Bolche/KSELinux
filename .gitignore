@@ -2,3 +2,4 @@ KSE_log.txt
 KSE_Errors.txt
 logs/*
 dist/*
+**/*.exe
