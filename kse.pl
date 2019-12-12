@@ -76,7 +76,7 @@ use Tk::TList;
 use Tk::ItemStyle;
 # use Tk::ErrorDialog;
 require Tk::Dialog;
-our $version='v3.3.7e';
+our $version='v3.3.8';
 if ($Tk::VERSION  eq '800.029') { $version .= ' alternate'}
 use Win32::FileOp;
 use Win32::TieRegistry;
@@ -4653,9 +4653,12 @@ elsif ($gameversion==4) { %master_item_list=%master_item_list3; $registered_path
     push @spawned_widgets,$lbl;
 
     if (scalar keys %master_item_list == 0) {
-        $lbl->configure(-text=>"Building Master Item List...");
-        Generate_Master_Item_List($gameversion);
+        # Disabled the first $lbl->configure and moved the second in it's place
+        # This was causing a problem with $lbl->configure after Generate_Master_Item_List
+
+        # $lbl->configure(-text=>"Building Master Item List...");
         $lbl->configure(-text=>"Available Items:");
+        Generate_Master_Item_List($gameversion);
         if ($gameversion==1) { %master_item_list=%master_item_list1}
         elsif ($gameversion==2) {%master_item_list=%master_item_list2}
         elsif ($gameversion==3 && $use_tsl_cloud == 1) {%master_item_list=%master_item_list2}
