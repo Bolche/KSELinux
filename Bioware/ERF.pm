@@ -23,6 +23,8 @@ package Bioware::ERF; #~~~~~~~~~~~~~~~
 
 #use strict;
 require Exporter;
+require File::Temp;
+use File::Temp qw/ tempfile tempdir /;
 use vars qw ($VERSION @ISA @EXPORT);
 $VERSION=0.21;
 
@@ -409,13 +411,13 @@ sub export_resource_to_temp_file {
     return 0 unless defined $res_ix;
 
     $resource=$self->{'resources'}[$res_ix];
-    use Win32API::File::Temp;
-    my $tempfile=Win32API::File::Temp->new();
-    binmode $tempfile->{'fh'};
+    use File::Temp qw/ tempfile /;
+    my ($tempfile, $tempfilename)=tempfile(UNLINK=>1);
+    binmode $tempfile;
 #    my $tempfile = %tempfile;
 
     if ($resource->{'res_data'}) {
-        syswrite $tempfile->{'fh'}, $resource->{'res_data'}; }
+        syswrite $tempfile, $resource->{'res_data'}; }
     else {
         (open my ($in_fh),"<", $self->{'erf_filename'}) or
           (return 0);
@@ -423,10 +425,10 @@ sub export_resource_to_temp_file {
         sysseek $in_fh, $resource->{'res_offset'},0;
         my $tmp;
         sysread $in_fh,$tmp,$resource->{'res_size'};
-        $written=syswrite $tempfile->{'fh'},$tmp;
+        $written=syswrite $tempfile,$tmp;
         close $in_fh;
     }
-    return $tempfile;
+    return ($tempfile, $tempfilename);
 }
 
 
@@ -863,8 +865,8 @@ sub new2 {
         binmode $fh;
         $erf_size=(-s $fh); }
     elsif ($sourcetype eq 'scalar') {
-        $fh=Win32API::File::Temp->new();
-         #($fh, undef)=tempfile(UNLINK=>1);
+        #$fh=Win32API::File::Temp->new();
+        ($fh, undef)=tempfile(UNLINK=>1);
         binmode $fh;
         if ((ref $source) eq 'SCALAR') {
             $erf_size +=syswrite $fh, $$source; }
@@ -957,8 +959,8 @@ sub insert_resource { #inserts a resource from a scalar
     if ($resource_preexists) {
         # STEPS
         # 1. read all data that comes after the resource to be replaced
-        my $tmp=Win32API::File::Temp->new();
-        #my ($tmp,undef)=tempfile(UNLINK=>1);
+        #my $tmp=Win32API::File::Temp->new();
+        my ($tmp,undef)=tempfile(UNLINK=>1);
         binmode $tmp;
         unless ($resource_is_last) {
             my ($nextres_offset,undef)=$self->$get_resource_entry_by_id($new_res_id+1);
@@ -998,10 +1000,10 @@ sub insert_resource { #inserts a resource from a scalar
     } else {
         # STEPS
         # 1. read resource list data, read resource data
-        #my ($rld,undef)=tempfile(UNLINK=>1); binmode $rld;
-        #my ($rd,undef)=tempfile(UNLINK=>1);  binmode $rd;
-        my $rld=Win32API::File::Temp->new();
-        my $rd=Win32API::File::Temp->new();
+        my ($rld,undef)=tempfile(UNLINK=>1); binmode $rld;
+        my ($rd,undef)=tempfile(UNLINK=>1);  binmode $rd;
+        #my $rld=Win32API::File::Temp->new();
+        #my $rd=Win32API::File::Temp->new();
         sysseek $self->{'fh'},$res_offset,0;
 
         $temp=sysread $self->{'fh'},my ($rld_data),$old_resource_count*8;

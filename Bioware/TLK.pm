@@ -36,8 +36,10 @@ use bytes;
 require Exporter;
 use vars qw ($VERSION @ISA @EXPORT);
 
-use Win32::API;
-my $msgbox=Win32::API->new('user32','MessageBoxA','NPPN','N');
+sub msgbox {
+    my($msg) = @_;
+    system("/usr/bin/zenity", "--warning", "--ellipsize", "--text=".$msg);
+}
 # set version
 $VERSION=0.04; #SUPPORT FOR TLK V4.0 files (Jade Empire)
 #$VERSION=0.03; #changed > to >= in if ($resrefnum>=$string_count)
@@ -55,7 +57,7 @@ sub string_from_resref($$;$) {
 
     return '' if $resrefnum<0;
 
-    (open TLK, "<", "$tlk_path\\dialog.tlk") || (return);
+    (open TLK, "<", "$tlk_path/dialog.tlk") || (return);
 
     seek TLK,0,0;
     read TLK,(my $tlkversion),8;
@@ -103,7 +105,7 @@ sub string_from_resref($$;$) {
     my $file_size = $offset + $offset2;
 
 #    print "Beginning TLK output:\n";
-#    print "TLK Size: " . -s "$tlk_path\\dialog.tlk";
+#    print "TLK Size: " . -s "$tlk_path/dialog.tlk";
 #    print "\nVersion: $tlkversion\n";
 #    print "Resref: $resrefnum\n";
 #    print "String Count: $string_count\n";
@@ -121,9 +123,8 @@ sub string_from_resref($$;$) {
     read TLK,(my $string_count_packed),4;
     my $string_count=unpack('V',$string_count_packed);
     if ($resrefnum>=$string_count) {
-      $msgbox->Call(0,"Attempted to read past end of end of dialog.tlk \n"
-      ."(tried to read string $resrefnum but dialog.tlk only goes up to entry number " . ($string_count-1) .")"."\n\n$breadcrumb",
-      "Dialog.tlk error",0);
+      msgbox("Attempted to read past end of end of dialog.tlk \n"
+      ."(tried to read string $resrefnum but dialog.tlk only goes up to entry number " . ($string_count-1) .")"."\n\n$breadcrumb");
 
 #      die "Dialog.tlk error: Attempted to read past end of end of dialog.tlk \n"
 #        ."(tried to read string $resrefnum but dialog.tlk only goes up to entry number " . ($string_count-1) .")"."\n$breadcrumb"
@@ -158,9 +159,8 @@ sub GetStringInfo($$;$) {
     read TLK,(my $string_count_packed),4;
     my $string_count=unpack('V',$string_count_packed);
     if ($resrefnum>=$string_count) {
-      $msgbox->Call(0,"Attempted to read past end of end of dialog.tlk \n"
-      ."(tried to read string $resrefnum but dialog.tlk only goes up to entry number " . ($string_count-1) .")"."\n\n$breadcrumb",
-      "Dialog.tlk error",0);
+      msgbox("Attempted to read past end of end of dialog.tlk \n"
+      ."(tried to read string $resrefnum but dialog.tlk only goes up to entry number " . ($string_count-1) .")"."\n\n$breadcrumb");
 
 #      die "Dialog.tlk error: Attempted to read past end of end of dialog.tlk \n"
 #        ."(tried to read string $resrefnum but dialog.tlk only goes up to entry number " . ($string_count-1) .")"."\n$breadcrumb"
@@ -190,7 +190,7 @@ sub tlk_info
     my $tlk_path = shift;
     my %info;
 
-    open (TLK, "<", "$tlk_path\\dialog.tlk");
+    open (TLK, "<", "$tlk_path/dialog.tlk");
 
     seek TLK, 0, 0;
     read TLK, $info{'version'}, 8;
@@ -209,7 +209,7 @@ sub number_of_strings
 {
     my $tlk_path=shift;
 
-    (open TLK, "<", "$tlk_path\\dialog.tlk") || (return);
+    (open TLK, "<", "$tlk_path/dialog.tlk") || (return);
 
     seek TLK,0,0;
     read TLK,(my $tlkversion),8;
@@ -276,7 +276,7 @@ sub add_new_entry
     my $tlk_path = shift;
 #    my $num_entries = shift;
     my $entry = shift;
-#    open TLK, "<", "$tlk_path\\dialog.tlk" or die("$!");
+#    open TLK, "<", "$tlk_path/dialog.tlk" or die("$!");
 #    my $num_entry = number_of_strings($tlk_path);
 
 #    seek TLK, 16, 0;
@@ -326,8 +326,8 @@ sub add_new_entry
 #    $info{'scount'} = pack('V', 0);
 #    $info{'soffset'} = pack('V', 0);
 
-#    my $TLK = new_tlk("$tlk_path\\funny.tlk", %info);
-    open(TLK, ">", "$tlk_path\\funny.tlk");
+#    my $TLK = new_tlk("$tlk_path/funny.tlk", %info);
+    open(TLK, ">", "$tlk_path/funny.tlk");
 
     my %entry1 = %{$entry};
     $entry1{StringSize} = length($entry1{String});

@@ -35,6 +35,8 @@ use Bioware::TPC 0.02;
 use Imager;
 #use Tk::PNG;
 #use Imager::File::PNG;
+require File::Temp;
+use File::Temp qw/ tempfile tempdir /;
 use Tk::HList;
 use Tk::Autoscroll;
 use Tk::DynaTabFrame;
@@ -78,14 +80,12 @@ use Tk::ItemStyle;
 require Tk::Dialog;
 our $version='v3.3.8';
 if ($Tk::VERSION  eq '800.029') { $version .= ' alternate'}
-use Win32::FileOp;
-use Win32::TieRegistry;
 use bytes;
 our %leaf_memory;
 
 our $workingdir;
-our $Logfile = "\\KSE_log.txt";
-our $Errlog = "\\KSE_Errors.txt";
+our $Logfile = "/KSE_log.txt";
+our $Errlog = "/KSE_Errors.txt";
 our $loginfo;
 our $hour1;
 #our $treesource;
@@ -246,7 +246,7 @@ my $picture_label_photo;
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 $workingdir = getcwd;
-$workingdir =~ s#/#\\#g;
+$workingdir =~ s#/#\/#g;
 
 #if (-e "$Logfile")
 #{
@@ -322,13 +322,11 @@ my $inilocation = undef;
 my $mad = new MyAppData;
 my $dontRerun = "false";
 
-if ($osname eq 'MSWin32') {
-    if (( -e $mad->getlocalappdata() . "\\kse\\kse.ini") == 0) {
-        system "KPF.exe";
-    }
-
-    $inilocation = $mad->getlocalappdata() . "\\kse\\kse.ini";
+if (( -e $mad->getlocalappdata() . "/kse/kse.ini") == 0) {
+    system "./KPF";
 }
+
+$inilocation = $mad->getlocalappdata() . "/kse/kse.ini";
 
 if(-e $inilocation)
 {
@@ -453,16 +451,16 @@ if($k2_installed == 1)
         my $appdata_obj = MyAppData->new();
         my $appdata = $appdata_obj->getappdata();
 
-        if(-e $appdata . "/SWKotOR2/saves")
+        if(-e $appdata . "/kotor2/saves")
         {
             $tslfound = 1;
-            $path{'tsl_save'} = $appdata . "/SWKotOR2/saves";
+            $path{'tsl_save'} = $appdata . "/kotor2/saves";
         }
         else { $tslfound = 0; }
     }
 
     # Check if cloudsaves dir can be located
-    if(-e $path{tsl} . "\\cloudsaves")
+    if(-e $path{tsl} . "/cloudsaves")
     {
         $use_tsl_cloud = 1;
         opendir(CLOUDSAVEDIR, $path{'tsl'} . "/cloudsaves");
@@ -581,7 +579,7 @@ MainLoop;
 LogIt ("---------Termination--------\n\n");
 close STDERR;
 
-$path{tsl_save} = $path{tsl} . "\\saves";
+$path{tsl_save} = $path{tsl} . "/saves";
 
 # open INI, ">", "$workingdir/KSE.ini";
 
@@ -716,19 +714,19 @@ sub What {  #called by BrowseCmd
                 elsif ($levels[2] eq 'NPCs')      { Populate_NPCs($parm1)    }
                 elsif ($levels[2] eq 'Globals')   {
                   if ($gameversion==1) {
-                    Read_Global_Vars("$path{kotor}\\saves\\$levels[1]",$parm1)
+                    Read_Global_Vars("$path{kotor}/saves/$levels[1]",$parm1)
                   }
                   elsif ($gameversion==2) {
-                    Read_Global_Vars("$path{tsl_save}\\$levels[1]",$parm1)
+                    Read_Global_Vars("$path{tsl_save}/$levels[1]",$parm1)
                   }
                   elsif ($gameversion==3 && $use_tsl_cloud == 0) {
-                    Read_Global_Vars("$path{tjm}\\saves\\$levels[1]",$parm1)
+                    Read_Global_Vars("$path{tjm}/saves/$levels[1]",$parm1)
                   }
                   elsif ($gameversion==3 && $use_tsl_cloud == 1) {
-                    Read_Global_Vars("$path{tsl_cloud}\\$levels[1]",$parm1)
+                    Read_Global_Vars("$path{tsl_cloud}/$levels[1]",$parm1)
                   }
                   elsif ($gameversion==4) {
-                    Read_Global_Vars("$path{tjm}\\saves\\$levels[1]",$parm1)
+                    Read_Global_Vars("$path{tjm}/saves/$levels[1]",$parm1)
                   }
 		}
                 elsif ($levels[2] eq 'Inventory') { Populate_Inventory($parm1) }
@@ -835,8 +833,8 @@ sub Populate_EquipTables
                 $sitem = $j->get($j->curselection());
 
                 my $gffb1 = Bioware::GFF->new();
-                if(-e $path{$g} . "\\override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\override\\$item.uti");    }
-                elsif(-e $path{$g} . "\\Override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\Override\\$item.uti"); }
+                if(-e $path{$g} . "/override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/override/$item.uti");    }
+                elsif(-e $path{$g} . "/Override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/Override/$item.uti"); }
                 else
                 {
                     my $gffbif1 = Bioware::BIF->new($path{$g});
@@ -877,8 +875,8 @@ sub Populate_EquipTables
                 $sitem = $k->get($k->curselection());
 
                 my $gffb1 = Bioware::GFF->new();
-                if(-e $path{$g} . "\\override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\override\\$item.uti");    }
-                elsif(-e $path{$g} . "\\Override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\Override\\$item.uti"); }
+                if(-e $path{$g} . "/override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/override/$item.uti");    }
+                elsif(-e $path{$g} . "/Override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/Override/$item.uti"); }
                 else
                 {
                     my $gffbif1 = Bioware::BIF->new($path{$g});
@@ -929,8 +927,8 @@ sub Populate_EquipTables
                 $sitem = $j->get($j->curselection());
 
                 my $gffb1 = Bioware::GFF->new();
-                if(-e $path{$g} . "\\override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\override\\$item.uti");    }
-                elsif(-e $path{$g} . "\\Override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\Override\\$item.uti"); }
+                if(-e $path{$g} . "/override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/override/$item.uti");    }
+                elsif(-e $path{$g} . "/Override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/Override/$item.uti"); }
                 else
                 {
                     my $gffbif1 = Bioware::BIF->new($path{$g});
@@ -971,8 +969,8 @@ sub Populate_EquipTables
                 $sitem = $k->get($k->curselection());
 
                 my $gffb1 = Bioware::GFF->new();
-                if(-e $path{$g} . "\\override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\override\\$item.uti");    }
-                elsif(-e $path{$g} . "\\Override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\Override\\$item.uti"); }
+                if(-e $path{$g} . "/override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/override/$item.uti");    }
+                elsif(-e $path{$g} . "/Override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/Override/$item.uti"); }
                 else
                 {
                     my $gffbif1 = Bioware::BIF->new($path{$g});
@@ -1019,8 +1017,8 @@ sub Populate_EquipTables
                 $sitem = $j->get($j->curselection());
 
                 my $gffb1 = Bioware::GFF->new();
-                if(-e $path{$g} . "\\override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\override\\$item.uti");    }
-                elsif(-e $path{$g} . "\\Override\\$sitem.uti") { $gffb1->read_gff_file($path{$g} . "\\Override\\$item.uti"); }
+                if(-e $path{$g} . "/override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/override/$item.uti");    }
+                elsif(-e $path{$g} . "/Override/$sitem.uti") { $gffb1->read_gff_file($path{$g} . "/Override/$item.uti"); }
                 else
                 {
                     my $gffbif1 = Bioware::BIF->new($path{$g});
@@ -1091,8 +1089,8 @@ sub Populate_EquipTables
             if($array->[$in]{ID} == $id)
             {#print "Found a match: $in ID: $id\n";
                 my $gffb = Bioware::GFF->new();
-                if(-e $path{$g} . "\\override\\$sitem.uti") { $gffb->read_gff_file($path{$g} . "\\override\\$item.uti");    }
-                elsif(-e $path{$g} . "\\Override\\$sitem.uti") { $gffb->read_gff_file($path{$g} . "\\Override\\$item.uti"); }
+                if(-e $path{$g} . "/override/$sitem.uti") { $gffb->read_gff_file($path{$g} . "/override/$item.uti");    }
+                elsif(-e $path{$g} . "/Override/$sitem.uti") { $gffb->read_gff_file($path{$g} . "/Override/$item.uti"); }
                 else
                 {
                     my $gffbif = Bioware::BIF->new($path{$g});
@@ -1254,8 +1252,8 @@ sub Populate_Level1 {
     }
 #read the SAVENFO.RES file
     my $res_gff=Bioware::GFF->new();
-    unless (my $tmp=$res_gff->read_gff_file("$registered_path\\$gamedir\\savenfo.res")) {
-        die ("Could not read $registered_path\\$gamedir\\savenfo.res");
+    unless (my $tmp=$res_gff->read_gff_file("$registered_path/$gamedir/savenfo.res")) {
+        die ("Could not read $registered_path/$gamedir/savenfo.res");
     }
     my $time_played=$res_gff->{Main}{Fields}[$res_gff->{Main}->get_field_ix_by_label('TIMEPLAYED')]{Value};
     my $area_name=$res_gff->{Main}{Fields}[$res_gff->{Main}->get_field_ix_by_label('AREANAME')]{Value};
@@ -1265,8 +1263,8 @@ sub Populate_Level1 {
 
 #read the PARTYTABLE.RES file
     my $pty_gff=Bioware::GFF->new();
-    unless (my $tmp=$pty_gff->read_gff_file("$registered_path\\$gamedir\\partytable.res")) {
-        die ("Could not read $registered_path\\$gamedir\\partytable.res");
+    unless (my $tmp=$pty_gff->read_gff_file("$registered_path/$gamedir/partytable.res")) {
+        die ("Could not read $registered_path/$gamedir/partytable.res");
     }
     my $credits=$pty_gff->{Main}{Fields}[$pty_gff->{Main}->get_field_ix_by_label('PT_GOLD')]{Value};
     my $partyxp=$pty_gff->{Main}{Fields}[$pty_gff->{Main}->get_field_ix_by_label('PT_XP_POOL')]{Value};
@@ -1305,33 +1303,33 @@ sub Populate_Level1 {
 
     my $erf=Bioware::ERF->new();                                            		        #create ERF for savegame.sav
                                                                                                 #read savegame.sav structure
-    unless (my $tmp=$erf->read_erf("$registered_path\\$gamedir\\savegame.sav")) {
-        die "Could not read $registered_path\\$gamedir\\savegame.sav";
+    unless (my $tmp=$erf->read_erf("$registered_path/$gamedir/savegame.sav")) {
+        die "Could not read $registered_path/$gamedir/savegame.sav";
     }
     my $tmpfil_inv;
-    unless ($tmpfil_inv=$erf->export_resource_to_temp_file("INVENTORY.res")) {                  #export inventory.res as a temp file
-        die "Could not find INVENTORY.res inside of $registered_path\\$gamedir\\savegame.sav";
+    unless (($tmpfil_inv,$tmpfil_inv_name)=$erf->export_resource_to_temp_file("INVENTORY.res")) {                  #export inventory.res as a temp file
+        die "Could not find INVENTORY.res inside of $registered_path/$gamedir/savegame.sav";
     }
     my $gff_inv=Bioware::GFF->new();                                                            #create GFF for inventory.res
-    unless (my $tmp=$gff_inv->read_gff_file($tmpfil_inv->{'fn'})) {                             #read invenotry.res into GFF
+    unless (my $tmp=$gff_inv->read_gff_file($tmpfil_inv_name)) {                             #read invenotry.res into GFF
         die "Could not read from temp file containing INVENTORY.res";
     }
     my $tmpfil_sav;
-    unless ($tmpfil_sav=$erf->export_resource_to_temp_file("$last_module.sav")) {               #export the last module as a temp file
-        die "Could not find $last_module.sav inside of $registered_path\\$gamedir\\savegame.sav";
+    unless (($tmpfil_sav,$tmpfil_sav_name)=$erf->export_resource_to_temp_file("$last_module.sav")) {               #export the last module as a temp file
+        die "Could not find $last_module.sav inside of $registered_path/$gamedir/savegame.sav";
     }
     my $erf2=Bioware::ERF->new();                                                               #create ERF for last module
-    unless (my $tmp=$erf2->read_erf($tmpfil_sav->{'fn'})) {                                     #read last module structure
+    unless (my $tmp=$erf2->read_erf($tmpfil_sav_name)) {                                     #read last module structure
         die "Could not read from temp file containing $last_module.sav";
     }
     $erf2->{'tmpfil'}=$tmpfil_sav;                                                              #tuck the temp file into the erf for safekeeping
     $erf2->{'modulename'}="$last_module.sav";                                                   #tuck the module name into the erf for safekeeping
     my $tmpfil_ifo;
-    unless($tmpfil_ifo=$erf2->export_resource_to_temp_file("module.ifo")) {                     #export the module.ifo file as a temp file
+    unless(($tmpfil_ifo,$tmpfil_ifo_name)=$erf2->export_resource_to_temp_file("module.ifo")) {                     #export the module.ifo file as a temp file
         die "Could not find module.ifo inside of $last_module.sav";
     }
     my $gff_ifo=Bioware::GFF->new();                                                            #create GFF for module.ifo
-    unless (my $tmp=$gff_ifo->read_gff_file($tmpfil_ifo->{'fn'})) {                             #read module.ifo into GFF
+    unless (my $tmp=$gff_ifo->read_gff_file($tmpfil_ifo_name)) {                             #read module.ifo into GFF
         die "Could not read from temp file containing module.ifo";
     }
 
@@ -1496,7 +1494,7 @@ sub Read_Global_Vars{
     $tree->add($treeitem."#Numerics",-text=>"Numerics");
 
     my $gff=Bioware::GFF->new();
-    $gff->read_gff_file("$dir\\GLOBALVARS.res");
+    $gff->read_gff_file("$dir/GLOBALVARS.res");
 
     my %boogleans;
     my %numrics;
@@ -1558,7 +1556,7 @@ sub Populate_Classes {
 	$gm =~ s#$1##;
 
 	$_ = $su;
-    #my $file_to_open="$registered_path\\saves\\".(split /#/,$treeitem)[1]."\\savegame.sav";
+    #my $file_to_open="$registered_path/saves/".(split /#/,$treeitem)[1]."/savegame.sav";
     #unless (open SAV,"<",$file_to_open) { return; }
 
     # get our breadcrumbs
@@ -1883,8 +1881,8 @@ sub Populate_NPCs{
     for my $npc_num (@$avail_npcs_ref) {
         my $tmpfil=$erf_sav->export_resource_to_temp_file("AVAILNPC$npc_num.utc");
         my $npc_gff=Bioware::GFF->new();
-        $npc_gff->read_gff_file($tmpfil->{'fn'});
-        LogIt ("AVAILNPC$npc_num read into memory " . (-s $tmpfil->{'fn'}) ." bytes). Parsing module");
+        $npc_gff->read_gff_file($tmpfil);
+        LogIt ("AVAILNPC$npc_num read into memory " . (-s $tmpfil) ." bytes). Parsing module");
         my $strref=$npc_gff->{Main}{'Fields'}[$npc_gff->{Main}->get_field_ix_by_label('FirstName')]{'Value'}{'StringRef'};
         my $npcname;
         if ($strref == -1) {
@@ -2355,35 +2353,35 @@ sub CommitChanges {
     my $gamedir=(split /#/,$treeitem)[2];
     LogIt ("Committing changes for $gv->$gm");
 
-# write PARTYTABLE.res
-    my $fn="$registered_path\\$gamedir\\PARTYTABLE.res";
-    my $tot_pty_written=$pty_gff->write_gff_file($fn);
-    if ($tot_pty_written==0) { die "Could not write to $registered_path\\$gamedir\\PARTYTABLE.res" }
+# write partytable.res
+    my $fn="$registered_path/$gamedir/partytable.res";
+    my $tot_pty_written=$pty_gff->write_gff_file($fn, 1);
+    if ($tot_pty_written==0) { die "Could not write to $registered_path/$gamedir/partytable.res" }
     LogIt ("Partytable updated. $tot_pty_written bytes written.");
 
 # write savenfo.res
-    my $fn2="$registered_path\\$gamedir\\savenfo.res";
-    my $tot_res_written=$res_gff->write_gff_file($fn2);
-    if ($tot_res_written==0) { die "Could not write to $registered_path\\$gamedir\\savenfo.res" }
+    my $fn2="$registered_path/$gamedir/savenfo.res";
+    my $tot_res_written=$res_gff->write_gff_file($fn2, 1);
+    if ($tot_res_written==0) { die "Could not write to $registered_path/$gamedir/savenfo.res" }
     LogIt ("Savenfo updated. $tot_res_written bytes written.");
 
 # write GLOBALVARS.res
     if (ref $gbl_gff eq 'Bioware::GFF') {
-       my $fn2a="$registered_path\\$gamedir\\GLOBALVARS.res";
-       my $tot_gbl_written=$gbl_gff->write_gff_file($fn2a);
-       if ($tot_gbl_written==0) { die "Could not write to $registered_path\\$gamedir\\GLOBALVARS.res" }
+       my $fn2a="$registered_path/$gamedir/globalvars.res";
+       my $tot_gbl_written=$gbl_gff->write_gff_file($fn2a, 1);
+       if ($tot_gbl_written==0) { die "Could not write to $registered_path/$gamedir/globalvars.res" }
        LogIt ("GLOBALVARS.res updataed.  $tot_gbl_written bytes written.");
     }
 
 # write Module.ifo to tempfile
-    my $tmpfil=Win32API::File::Temp->new();
-    unless (my $tmp=$ifo_gff->write_gff_file($tmpfil->{'fn'})) {
+    my (undef, $tmpfil)=tempfile(UNLINK=>1);;
+    unless (my $tmp=$ifo_gff->write_gff_file($tmpfil, 1)) {
         die "Could not write module.ifo to temp file.";
     }
 
 # write INVENTORY.res to tempfile
-    my $tmpfil_inv=Win32API::File::Temp->new();
-    unless (my $tmp=$inv_gff->write_gff_file($tmpfil_inv->{'fn'})) {
+    my (undef, $tmpfil_inv)=tempfile(UNLINK=>1);;
+    unless (my $tmp=$inv_gff->write_gff_file($tmpfil_inv, 1)) {
         die "Could not write INVENTORY.res to temp file.";
     }
 
@@ -2393,14 +2391,14 @@ sub CommitChanges {
     }
 
 # insert into erf_mod the new module.ifo file
-    unless (my $tmp=$erf_mod->import_resource($tmpfil->{'fn'},'Module.ifo')) {
+    unless (my $tmp=$erf_mod->import_resource($tmpfil,'Module.ifo')) {
         die "Failed to import Module.ifo into last module of savegame";
     }
 
 
 # write the erf_mod to tempfile
-    my $tmpfil2=Win32API::File::Temp->new();
-    unless (my $tmp=$erf_mod->write_erf($tmpfil2->{'fn'})) {
+    my (undef, $tmpfil2)=tempfile(UNLINK=>1);;
+    unless (my $tmp=$erf_mod->write_erf($tmpfil2)) {
         die "Failed to write last module to temp file.";
     }
 
@@ -2410,12 +2408,12 @@ sub CommitChanges {
     }
 
 # insert into erf_sav the new erf_mod file
-    unless (my $tmp=$erf_sav->import_resource($tmpfil2->{'fn'},$erf_mod->{'modulename'})) {
+    unless (my $tmp=$erf_sav->import_resource($tmpfil2,$erf_mod->{'modulename'})) {
         die "Failed to import last module of savegame into main savegame data.";
     }
 
 # insert into erf_sav the new INVENTORY.res file
-    unless (my $tmp=$erf_sav->import_resource($tmpfil_inv->{'fn'},'INVENTORY.res')) {
+    unless (my $tmp=$erf_sav->import_resource($tmpfil_inv,'INVENTORY.res')) {
         die "Failed to import INVENTORY.res into main savegame data.";
     }
 
@@ -2425,11 +2423,11 @@ sub CommitChanges {
         if ($datahash->{$utcname}) {
             my $utc_gff=$datahash->{$utcname};
             LogIt "Writing $utcname";
-            my $tmpfil=Win32API::File::Temp->new();
-            unless (my $tmp=$utc_gff->write_gff_file($tmpfil->{'fn'})) {
+            my (undef, $tmpfil)=tempfile(UNLINK=>1);;
+            unless (my $tmp=$utc_gff->write_gff_file($tmpfil, 1)) {
                 die "Failed to write $utcname to tempfile";
             }
-            unless (my $tmp=$erf_sav->import_resource($tmpfil->{'fn'},$utcname)) {
+            unless (my $tmp=$erf_sav->import_resource($tmpfil,$utcname)) {
                 die "Failed to import $utcname into main savegame data.";
             }
         }
@@ -2440,11 +2438,11 @@ sub CommitChanges {
     if ($datahash->{$utcname}) {
         my $utc_gff=$datahash->{$utcname};
         LogIt "Writing $utcname";
-        my $tmpfil=Win32API::File::Temp->new();
-        unless (my $tmp=$utc_gff->write_gff_file($tmpfil->{'fn'})) {
+        my (undef, $tmpfil)=tempfile(UNLINK=>1);;
+        unless (my $tmp=$utc_gff->write_gff_file($tmpfil, 1)) {
             die "Failed to write PC.utc to tempfile";
         }
-        unless (my $tmp=$erf_sav->import_resource($tmpfil->{'fn'},$utcname)) {
+        unless (my $tmp=$erf_sav->import_resource($tmpfil,$utcname)) {
             die "Failed to import PC.utc to tempfile";
         }
     }
@@ -2454,10 +2452,10 @@ sub CommitChanges {
 
 # write new erf_sav
     my $total_written;
-    unless ($total_written=$erf_sav->write_erf("$registered_path\\$gamedir\\savegame.sav")) {
-        die "Could not write to $registered_path\\$gamedir\\savegame.sav"
+    unless ($total_written=$erf_sav->write_erf("$registered_path/$gamedir/savegame.sav")) {
+        die "Could not write to $registered_path/$gamedir/savegame.sav"
     }
-    LogIt("$registered_path\\$gamedir\\savegame.sav written ($total_written bytes total)");
+    LogIt("$registered_path/$gamedir/savegame.sav written ($total_written bytes total)");
 
 
 # do .sig files if a .sig file exists in the game directory
@@ -2478,26 +2476,26 @@ if (scalar @tmpsig) {
                    savenfo.res    SAVE_INFO.sig
                    screen.tga     Screen.sig);
     for my $f (keys %gff_to_sig) {
-        next unless -e "$registered_path\\$gamedir\\$f";
+        next unless -e "$registered_path/$gamedir/$f";
         local $/;
-        open my ($fh),"<","$registered_path\\$gamedir\\$f";
+        open my ($fh),"<","$registered_path/$gamedir/$f";
         binmode $fh;
         my $data=<$fh>;
         close $fh;
         my $hmac_out= hmac_sha1($data,$authkey);
-        open my ($fho),">","$registered_path\\$gamedir\\$gff_to_sig{$f}";
+        open my ($fho),">","$registered_path/$gamedir/$gff_to_sig{$f}";
         binmode $fho;
         syswrite $fho, $hmac_out;
         close $fho;
         LogIt ("$gff_to_sig{$f} created.");
     }
 
-    my $savegame_size= -s "$registered_path\\$gamedir\\savegame.sav";
+    my $savegame_size= -s "$registered_path/$gamedir/savegame.sav";
     #my $headerdata;
     my $headervardata;
     my $datadata;
     my %self;
-    (open my ($fh), "<", "$registered_path\\$gamedir\\savegame.sav") or (return 0);
+    (open my ($fh), "<", "$registered_path/$gamedir/savegame.sav") or (return 0);
     binmode $fh;
     #sysread $fh,$headerdata,160;
 
@@ -2529,13 +2527,13 @@ if (scalar @tmpsig) {
      #close $fho;
 
      my $hmac_out= hmac_sha1($headervardata,$authkey);
-     open my ($fho),">","$registered_path\\$gamedir\\SAVE_HEADERVAR.sig";
+     open my ($fho),">","$registered_path/$gamedir/SAVE_HEADERVAR.sig";
      binmode $fho;
      syswrite $fho, $hmac_out;
      close $fho;
      LogIt ("SAVE_HEADERVAR.sig created.");
      $hmac_out= hmac_sha1($datadata,$authkey);
-     open $fho,">","$registered_path\\$gamedir\\SAVE_DATA.sig";
+     open $fho,">","$registered_path/$gamedir/SAVE_DATA.sig";
      binmode $fho;
      syswrite $fho, $hmac_out;
      close $fho;
@@ -2545,7 +2543,7 @@ if (scalar @tmpsig) {
 
     $mw->Unbusy;
 
-    $mw->Dialog(-title=>'Save Successful',-text=>"File $registered_path\\$gamedir\\savegame.sav saved successfully.",-font=>['MS Sans Serif','8'],-buttons=>['Ok'])->Show();
+    $mw->Dialog(-title=>'Save Successful',-text=>"File $registered_path/$gamedir/savegame.sav saved successfully.",-font=>['MS Sans Serif','8'],-buttons=>['Ok'])->Show();
 }
 #>>>>>>>>>>>>>>>>>>>>>>>>
 sub SpawnFeatWidgets {
@@ -2702,7 +2700,7 @@ Tk::Autoscroll::Init(my $featlist= $mw->Scrolled('TList',
     #display feat icon
     my $erf=Bioware::ERF->new();
     my $img=Imager->new();
-    unless ($erf->read_erf("$registered_path\\TexturePacks\\swpc_tex_gui.erf")) {
+    unless ($erf->read_erf("$registered_path/TexturePacks/swpc_tex_gui.erf")) {
         undef $erf;
     }
     $featlist->bind('<ButtonRelease-1>'=>sub {
@@ -3087,7 +3085,7 @@ sub SpawnAddPowerWidgets {
     #display power icon
     my $erf=Bioware::ERF->new();
     my $img=Imager->new();
-    unless ($erf->read_erf("$registered_path\\TexturePacks\\swpc_tex_gui.erf")) {
+    unless ($erf->read_erf("$registered_path/TexturePacks/swpc_tex_gui.erf")) {
         undef $erf;
     }
     $powerlist->bind('<ButtonRelease-1>'=>sub {
@@ -4203,7 +4201,7 @@ sub SpawnPortraitWidgets {
     my %revhash=reverse %portraits_hash;
     my $erf=Bioware::ERF->new();
     my $img=Imager->new();
-    unless ($erf->read_erf("$registered_path\\TexturePacks\\swpc_tex_gui.erf")) {
+    unless ($erf->read_erf("$registered_path/TexturePacks/swpc_tex_gui.erf")) {
         undef $erf;
 
     }
@@ -4691,7 +4689,7 @@ elsif ($gameversion==4) { %master_item_list=%master_item_list3; $registered_path
 
     my $erf=Bioware::ERF->new();
     my $img=Imager->new();
-    unless ($erf->read_erf("$registered_path\\TexturePacks\\swpc_tex_gui.erf")) {
+    unless ($erf->read_erf("$registered_path/TexturePacks/swpc_tex_gui.erf")) {
         undef $erf;
     }
 
@@ -4805,8 +4803,8 @@ elsif ($gameversion==4) { %master_item_list=%master_item_list3; $registered_path
             LogIt("Adding Item: $this_item_text");
             my $selected_uti=(split / /,$this_item_text)[0] . ".uti";
             my $uti_gff=Bioware::GFF->new();
-            if (-e "$registered_path\\override\\$selected_uti") {
-                $uti_gff->read_gff_file("$registered_path\\override\\$selected_uti"); }
+            if (-e "$registered_path/override/$selected_uti") {
+                $uti_gff->read_gff_file("$registered_path/override/$selected_uti"); }
             else {
                 my $bif=Bioware::BIF->new($registered_path,undef,'uti');
                 if ($bif == undef) { $bif=try_extracted_data($gameversion,undef,'uti') }
@@ -4917,8 +4915,8 @@ $num_to_add = $num_to_add + 0;# print $num_to_add;
             LogIt("Adding Item: $this_item_text");
             my $selected_uti=(split / /,$this_item_text)[0] . ".uti";
             my $uti_gff=Bioware::GFF->new();
-            if (-e "$registered_path\\override\\$selected_uti") {
-                $uti_gff->read_gff_file("$registered_path\\override\\$selected_uti"); }
+            if (-e "$registered_path/override/$selected_uti") {
+                $uti_gff->read_gff_file("$registered_path/override/$selected_uti"); }
             else {
                 my $bif=Bioware::BIF->new($registered_path,undef,'uti');
                 if ($bif == undef) { $bif=try_extracted_data($gameversion,undef,'uti') }
@@ -5199,7 +5197,7 @@ sub Generate_Master_Item_List {
     }
 
     #now get all uti files from override (overriding any templates.bif uti)
-    chdir "$registered_path\\override";
+    chdir "$registered_path/override";
     my @utifiles_in_override=glob "*.uti";
     for my $override_uti (@utifiles_in_override) {
         $tmp_gff->read_gff_file($override_uti);
@@ -5355,7 +5353,7 @@ sub LogIt {
     $loginfo=shift;
     my ($sec,$min,$hour,$mday,$mon,$year)=localtime();
 
-    open (LOG, ">>", $workingdir . "\\$Logfile");
+    open (LOG, ">>", $workingdir . "/$Logfile");
     print LOG ($mon+1, "/",$mday, "/",$year+1900, "--", $hour, ":",$min, ":",$sec, "= ",$loginfo, "\n");
     close LOG;
     return;
@@ -5365,7 +5363,7 @@ sub LogErr {
     unless ($debug_flag) {return;}
     my $error = shift;
     my ($sec,$min,$hour,$mday,$mon,$year)=localtime();
-    open (ERRLOG, ">>", $workingdir . "\\$Errlog");
+    open (ERRLOG, ">>", $workingdir . "/$Errlog");
     print ERRLOG ($mon+1, "/",$mday, "/",$year+1900, "--", $hour, ":",$min, ":",$sec, "= ",$error, "\n");
     close ERRLOG;
     return;
@@ -6135,34 +6133,34 @@ sub try_extracted_data {
             my $bif3_fn="k1_newbif.bif";
             my $chitinfile=PerlApp::extract_bound_file($chitin_fn);
             $chitinfile=~/(.*)\/$chitin_fn/;
-            $rootpath="$1\\k1";
+            $rootpath="$1/k1";
             mkdir $rootpath;
             my $chitinfile_fix=$chitinfile;
             $chitinfile_fix=~s/k1chitin\.key/chitin\.key/;
             rename $chitinfile, $chitinfile_fix;
-            Copy ($chitinfile_fix=>"$rootpath\\");
+            Copy ($chitinfile_fix=>"$rootpath/");
             unlink $chitinfile_fix;
 
-            mkdir "$rootpath\\data";
+            mkdir "$rootpath/data";
             my $biffile=PerlApp::extract_bound_file($bif_fn);
             my $biffile_fix=$biffile;
             $biffile_fix=~s/k12da\.bif/2da\.bif/;
             rename $biffile,$biffile_fix;
-            Copy ($biffile_fix=>"$rootpath\\data\\");
+            Copy ($biffile_fix=>"$rootpath/data/");
             unlink $biffile_fix;
 
             $biffile=PerlApp::extract_bound_file($bif2_fn);
             $biffile_fix=$biffile;
             $biffile_fix=~s/k1templates\.bif/templates\.bif/;
             rename $biffile,$biffile_fix;
-            Copy ($biffile_fix=>"$rootpath\\data\\");
+            Copy ($biffile_fix=>"$rootpath/data/");
             unlink $biffile_fix;
 
             $biffile=PerlApp::extract_bound_file($bif3_fn);
             $biffile_fix=$biffile;
             $biffile_fix=~s/k1_newbif\.bif/_newbif\.bif/;
             rename $biffile,$biffile_fix;
-            Copy ($biffile_fix=>"$rootpath\\data\\");
+            Copy ($biffile_fix=>"$rootpath/data/");
             unlink $biffile_fix;
 
 
@@ -6178,35 +6176,35 @@ sub try_extracted_data {
 
             my $chitinfile=PerlApp::extract_bound_file($chitin_fn);
             $chitinfile=~/(.*)\/$chitin_fn/;
-            $rootpath="$1\\k2";
+            $rootpath="$1/k2";
             mkdir $rootpath;
             my $chitinfile_fix=$chitinfile;
             $chitinfile_fix=~s/k2chitin\.key/chitin\.key/;
             rename $chitinfile, $chitinfile_fix;
-            Copy ($chitinfile_fix=>"$rootpath\\");
+            Copy ($chitinfile_fix=>"$rootpath/");
             unlink $chitinfile_fix;
 
             my $journalfile=PerlApp::extract_bound_file($journal_fn);
             my $journalfile_fix=$journalfile;
             $journalfile_fix=~s/k2global\.jrl/global\.jrl/;
             rename $journalfile, $journalfile_fix;
-            Copy ($journalfile_fix=>"$rootpath\\");
+            Copy ($journalfile_fix=>"$rootpath/");
             unlink $chitinfile_fix;
 
 
-            mkdir "$rootpath\\data";
+            mkdir "$rootpath/data";
             my $biffile=PerlApp::extract_bound_file($bif_fn);
             my $biffile_fix=$biffile;
             $biffile_fix=~s/k22da\.bif/2da\.bif/;
             rename $biffile,$biffile_fix;
-            Copy ($biffile_fix=>"$rootpath\\data\\");
+            Copy ($biffile_fix=>"$rootpath/data/");
             unlink $biffile_fix;
 
             $biffile=PerlApp::extract_bound_file($bif2_fn);
             $biffile_fix=$biffile;
             $biffile_fix=~s/k2templates\.bif/templates\.bif/;
             rename $biffile,$biffile_fix;
-            Copy ($biffile_fix=>"$rootpath\\data\\");
+            Copy ($biffile_fix=>"$rootpath/data/");
             unlink $biffile_fix;
     };
   }
@@ -6220,35 +6218,35 @@ sub try_extracted_data {
 
             my $chitinfile=PerlApp::extract_bound_file($chitin_fn);
             $chitinfile=~/(.*)\/$chitin_fn/;
-            $rootpath="$1\\k3";
+            $rootpath="$1/k3";
             mkdir $rootpath;
             my $chitinfile_fix=$chitinfile;
             $chitinfile_fix=~s/k3chitin\.key/chitin\.key/;
             rename $chitinfile, $chitinfile_fix;
-            Copy ($chitinfile_fix=>"$rootpath\\");
+            Copy ($chitinfile_fix=>"$rootpath/");
             unlink $chitinfile_fix;
 
             my $journalfile=PerlApp::extract_bound_file($journal_fn);
             my $journalfile_fix=$journalfile;
             $journalfile_fix=~s/k3global\.jrl/global\.jrl/;
             rename $journalfile, $journalfile_fix;
-            Copy ($journalfile_fix=>"$rootpath\\");
+            Copy ($journalfile_fix=>"$rootpath/");
             unlink $chitinfile_fix;
 
 
-            mkdir "$rootpath\\data";
+            mkdir "$rootpath/data";
             my $biffile=PerlApp::extract_bound_file($bif_fn);
             my $biffile_fix=$biffile;
             $biffile_fix=~s/k32da\.bif/2da\.bif/;
             rename $biffile,$biffile_fix;
-            Copy ($biffile_fix=>"$rootpath\\data\\");
+            Copy ($biffile_fix=>"$rootpath/data/");
             unlink $biffile_fix;
 
             $biffile=PerlApp::extract_bound_file($bif2_fn);
             $biffile_fix=$biffile;
             $biffile_fix=~s/k3templates\.bif/templates\.bif/;
             rename $biffile,$biffile_fix;
-            Copy ($biffile_fix=>"$rootpath\\data\\");
+            Copy ($biffile_fix=>"$rootpath/data/");
             unlink $biffile_fix;
     };
   }
@@ -6260,7 +6258,7 @@ sub try_extracted_data {
 	{
 	    	if ($parm1 eq 'Get Journal')
 		{
-			return "$rootpath\\global.jrl";
+			return "$rootpath/global.jrl";
 	    	}
 	    	else
 		{
@@ -6281,13 +6279,13 @@ sub Load {
                 LogIt ('KSE could not find saves directory for KotOR1.');
                 $k1_installed=0;
         }
-       my @savedirs=grep { !(/\\\.+$/) && -d } map {"$path{kotor}\\saves\\$_"} readdir(SAVDIR);    #read all directories in saves dir
+       my @savedirs=grep { !(/\/\.+$/) && -d } map {"$path{kotor}/saves/$_"} readdir(SAVDIR);    #read all directories in saves dir
        close SAVDIR;
        if ($branch_to_populate==1) {
          $tree->delete('offsprings','#1');                                                         #if this is a re-populate, then delete any leaves from this branch
        }
        for (@savedirs) {
-         /\\.*\\(.+?)$/;
+         /\/.*\/(.+?)$/;
          my $dir=$1;
          $tree->add('#1#'.$dir,-text=>$dir);
          $tree->add('#1#'.$dir.'#',-text=>'.');
@@ -6302,13 +6300,13 @@ sub Load {
                 $k2_installed=0;
         }
 
-        my @savedirs=grep { !(/\\\.+$/) && -d } map {"$path{tsl_save}\\$_"} readdir(SAVDIR2);    #read all directories in saves dir
+       my @savedirs=grep { !(/\/\.+$/) && -d } map {"$path{tsl_save}/$_"} readdir(SAVDIR2);    #read all directories in saves dir
        close SAVDIR2;
        if ($branch_to_populate==2) {
           $tree->delete('offsprings','#2');                                                        #if this is a re-populate, then delete any leaves from this branch
        }
        for (@savedirs) {
-         /\\.*\\(.+?)$/;
+         /\/.*\/(.+?)$/;
          my $dir=$1;
          $tree->add('#2#'.$dir,-text=>$dir);
          $tree->add('#2#'.$dir.'#',-text=>'.');
@@ -6323,13 +6321,13 @@ sub Load {
                 $use_tsl_cloud=0;
         }
 
-        my @savedirs=grep { !(/\\\.+$/) && -d } map {"$path{tsl_cloud}\\$_"} readdir(SAVDIR2);    #read all directories in saves dir
+        my @savedirs=grep { !(/\/\.+$/) && -d } map {"$path{tsl_cloud}/$_"} readdir(SAVDIR2);    #read all directories in saves dir
        close SAVDIR2;
        if ($branch_to_populate==3) {
           $tree->delete('offsprings','#3');                                                        #if this is a re-populate, then delete any leaves from this branch
        }
        for (@savedirs) {
-         /\\.*\\(.+?)$/;
+         /\/.*\/(.+?)$/;
          my $dir=$1;
          $tree->add('#3#'.$dir,-text=>$dir);
          $tree->add('#3#'.$dir.'#',-text=>'.');
@@ -6350,13 +6348,13 @@ sub Load {
                         $tjm_installed=0;
                 }
 
-                my @savedirs=grep { !(/\\\.+$/) && -d } map {"$path{tjm}\\saves\\$_"} readdir(SAVDIR3);  #read all directories in saves dir
+                my @savedirs=grep { !(/\/\.+$/) && -d } map {"$path{tjm}/saves/$_"} readdir(SAVDIR3);  #read all directories in saves dir
                 close SAVDIR3;
                 if ($branch_to_populate==3) {
                   $tree->delete('offsprings','#3');                                                      #if this is a re-populate, then delete any leaves from this branch
                 }
                 for (@savedirs) {
-                 /\\.*\\(.+?)$/;
+                 /\/.*\/(.+?)$/;
                  my $dir=$1;
                  $tree->add('#3#'.$dir,-text=>$dir);
                  $tree->add('#3#'.$dir.'#',-text=>'.');
@@ -6373,13 +6371,13 @@ sub Load {
                         $tjm_installed=0;
                 }
 
-               my @savedirs=grep { !(/\\\.+$/) && -d } map {"$path{tjm}\\saves\\$_"} readdir(SAVDIR3);  #read all directories in saves dir
+               my @savedirs=grep { !(/\/\.+$/) && -d } map {"$path{tjm}/saves/$_"} readdir(SAVDIR3);  #read all directories in saves dir
                close SAVDIR3;
                if ($branch_to_populate==4) {
                   $tree->delete('offsprings','#4');                                                      #if this is a re-populate, then delete any leaves from this branch
                }
                for (@savedirs) {
-                 /\\.*\\(.+?)$/;
+                 /\/.*\/(.+?)$/;
                  my $dir=$1;
                  $tree->add('#4#'.$dir,-text=>$dir);
                  $tree->add('#4#'.$dir.'#',-text=>'.');
@@ -6568,13 +6566,13 @@ sub ReloadAll {
 #        CommitChanges($treeitem_destination);
 #        $tree->delete('offsprings',$treeitem_destination."#Globals");
 #        if ($gameversion==1) {
-#              Read_Global_Vars("$path{kotor}\\saves\\$levels[1]",$parm1)
+#              Read_Global_Vars("$path{kotor}/saves/$levels[1]",$parm1)
 #           }
 #        elsif ($gameversion==2) {
-#              Read_Global_Vars("$path{tsl}\\saves\\$levels[1]",$parm1)
+#              Read_Global_Vars("$path{tsl}/saves/$levels[1]",$parm1)
 #           }
 #        elsif ($gameversion==3) {
-#              Read_Global_Vars("$path{tjm}\\saves\\$levels[1]",$parm1)
+#              Read_Global_Vars("$path{tjm}/saves/$levels[1]",$parm1)
 #           }
 #    }
 #}

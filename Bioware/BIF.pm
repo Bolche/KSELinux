@@ -24,8 +24,6 @@ use strict;
 require Exporter;
 use vars qw ($VERSION @ISA @EXPORT);
 
-use Win32::TieRegistry;
-
 $VERSION=0.02;
 @ISA    = qw(Exporter);
 @EXPORT = qw(  );
@@ -131,13 +129,7 @@ sub new {
     my $bif_type_filter=shift;
 
     unless ($registered_path) {
-        eval {
-            my  $kotor_key= new Win32::TieRegistry "LMachine/Software/Bioware/SW/Kotor",             #read registry
-                            {Access=>Win32::TieRegistry::KEY_READ, Delimiter=>"/"};
-            $registered_path= $kotor_key->GetValue("Path")
-
-            };
-        if ($@) { return }  # no path found
+        $registered_path = "/home/".getlogin."/.local/share/Steam/steamapps/common/Knights of the Old Republic II/steamassets"
     }
     unless (-e $registered_path.'/chitin.key') { return }
 
@@ -206,25 +198,26 @@ sub new {
 }
 
 sub extract_resource{
-    use Win32API::File::Temp;
     my $self=shift;
     my $bifname=shift;
     my $resource_name=shift;
     unless ($bifname) {return}
     unless ($self->{BIFs}{$bifname}) {return}
     unless ($self->{BIFs}{$bifname}{Resources}{$resource_name}) {return}
-    (open BIF,"<","$self->{path}/$bifname") or return;
+    my $bifname_path = $bifname;
+    $bifname_path =~ s/\\/\//g;
+    (open BIF,"<","$self->{path}/$bifname_path") or return;
     binmode BIF;
 
-    my $tmpfil=Win32API::File::Temp->new();
-    binmode ($tmpfil->{'fh'});
+    my ($tmpfil,undef)=tempfile(UNLINK=>1);
+    binmode ($tmpfil);
     sysseek (BIF,24+(16*($self->{BIFs}{$bifname}{Resources}{$resource_name}{Ix})),0);
     my $tmp;
     sysread BIF,$tmp,8;
     my ($res_offset, $res_size)=unpack('V2',$tmp);
     sysseek BIF, $res_offset, 0;
     sysread BIF, $tmp, $res_size;
-    syswrite $tmpfil->{'fh'},$tmp;
+    syswrite $tmpfil,$tmp;
     close BIF;
     return $tmpfil;
 }
@@ -239,7 +232,9 @@ sub get_resource{
     unless ($bifname) {return}
     unless ($self->{BIFs}{$bifname}) {return}
     unless ($self->{BIFs}{$bifname}{Resources}{$resource_name}) {return}
-    (open BIF,"<","$self->{path}/$bifname") or return;
+    my $bifname_path = $bifname;
+    $bifname_path =~ s/\\/\//g;
+    (open BIF,"<","$self->{path}/$bifname_path") or return;
     binmode BIF;
     sysseek (BIF,24+(16*($self->{BIFs}{$bifname}{Resources}{$resource_name}{Ix})),0);
     my $resource;

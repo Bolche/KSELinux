@@ -29,31 +29,27 @@ sub new
 
 sub getusername
 {
-	return getlogin || getpwuid($<) || "kaleb";
+	return getlogin || getpwuid($<) || "eduardo";
 }
 
 sub getlocalappdata
 {
     my ($self) = @_;
-    return "C:\\Users\\" . $self->getusername() . "\\AppData\\Local";
+    return "/home/" . $self->getusername() . "/.config";
 }
 
 sub getappdata
 {
 	my ($self) = @_;
-	my $appdataVPlus64 = "C:\\Users\\" . $self->getusername() . "\\AppData\\Local\\VirtualStore\\Program Files (x86)\\LucasArts";
-	my $appdataVPlus86 = "C:\\Users\\" . $self->getusername() . "\\AppData\\Local\\VirtualStore\\Program Files\\LucasArts";
-	my $appdataVSub = "C:\\Documents and Settings\\" . $self->getusername() . "\\AppData\\Local\\VirtualStore\\Program Files\\LucasArts";
+	my $appdata = "/home/". $self->getusername()."/.local/share/aspyr-media";
+	my $appdataSteam = "/home/eduardo/". $self->getusername()."/share/Steam/steamapps/common";
 
-	if (opendir DIR, $appdataVPlus64) {
+	if (opendir DIR, $appdata) {
 		close DIR;
-		return $appdataVPlus64;
-	} elsif (opendir DIR, $appdataVPlus86) {
+		return $appdata;
+	} elsif (opendir DIR, $appdataSteam) {
 		close DIR;
-		return $appdataVPlus86;
-	} elsif (opendir DIR, $appdataVSub) {
-		close DIR;
-		return $appdataVSub;
+		return $appdataSteam;
 	} else {
 		return "Failed to detect directory!";
 	}

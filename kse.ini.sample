@@ -1,0 +1,15 @@
+[Installed]
+K1_Installed=0
+K2_Installed=1
+TJM_Installed=0
+
+[Options]
+Use_K2_Cloud=1
+
+[Paths]
+K1_Path=undef
+K2_Path=/home/username/.local/share/Steam/steamapps/common/Knights of the Old Republic II/steamassets
+K2_SavePath=/home/username/.local/share/aspyr-media/kotor2/saves
+K2_SavePathCloud=/home/username/.local/share/Steam/steamapps/common/Knights of the Old Republic II/cloudsaves/65052520
+Steam_Path=/home/username/.local/share/Steam
+TJM_Path=undef

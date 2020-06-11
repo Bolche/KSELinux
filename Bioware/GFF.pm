@@ -183,7 +183,7 @@ sub write_gff_file($;$) {
     if ($use_native_file_temp) {
         $total_written=$gff->write_gff2($fn); }
     else {
-        $total_written=$gff->write_gff3($fn);
+        $total_written=$gff->write_gff2($fn);
     }
     return $total_written;
 }
@@ -196,9 +196,8 @@ sub read_gff_from_scalar($) {    #creates an struct from a gff memory stream (sc
     my $gffref=shift; unless (ref $gffref eq 'SCALAR') {return;}
     my $gff=$$gffref;
     my $fh;
-    #use File::Temp qw /tempfile/;
-    use Win32API::File::Temp;
-    my $tempf=Win32API::File::Temp->new();
+    use File::Temp qw /tempfile/;
+    my ($tempf, undef)=tempfile(UNLINK=>1);
     $fh=$tempf->{'fh'};
     binmode $fh;
     my $tot_written=syswrite $fh,$gff;
@@ -231,9 +230,8 @@ sub write_gff_to_scalar($$) {    #creates a memory stream from an gff struct
     my $gff_scalar;
     %write_info=();
     $struct0->writeStruct();
-    #use File::Temp qw /tempfile/;
-    use Win32API::File::Temp;
-    my $tempf=Win32API::File::Temp->new();
+    use File::Temp qw /tempfile/;
+    my ($tempf, undef)=tempfile(UNLINK=>1);
     my $fh=$tempf->{'fh'};
     $struct0->writeHeader(undef,$fh,$sig);
     sysseek $fh,0,0;
@@ -640,20 +638,13 @@ sub writeStruct {
 #Purpose: writes the structure to disk
 #Input: self
 #side effects: populates write_info and creates temp files
-    use Win32API::File::Temp;
+    use File::Temp qw/ tempfile /;
     my ($struct)=shift;
     unless ($write_info{'fh_struct'}) {
-        $write_info{'temp_struct'}   =Win32API::File::Temp->new();
-        $write_info{'fh_struct'}     =$write_info{'temp_struct'}{'fh'};
-
-        $write_info{'temp_field'}    =Win32API::File::Temp->new();
-        $write_info{'fh_field'}      =$write_info{'temp_field'}{'fh'};
-
-        $write_info{'temp_label'}    =Win32API::File::Temp->new();
-        $write_info{'fh_label'}      =$write_info{'temp_label'}{'fh'};
-
-        $write_info{'temp_fielddata'}=Win32API::File::Temp->new();
-        $write_info{'fh_fielddata'}  =$write_info{'temp_fielddata'}{'fh'};
+        ($write_info{'fh_struct'}      ,undef)=tempfile('strXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_struct'};
+        ($write_info{'fh_field'}       ,undef)=tempfile('fieXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_field'};
+        ($write_info{'fh_label'}       ,undef)=tempfile('lblXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_label'};
+        ($write_info{'fh_fielddata'}   ,undef)=tempfile('fdaXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_fielddata'};
     }
     syswrite $write_info{'fh_struct'}, pack('V',$struct->{'ID'});
     my $temp_fields_arr_ref=$struct->{'Fields'};
@@ -703,14 +694,14 @@ sub writeStruct2 {
     use File::Temp qw/ tempfile /;
     my ($struct)=shift;
     unless ($write_info{'fh_struct'}) {
-        $write_info{'fh_struct'}    =tempfile();
-        $write_info{'fh_field'}     =tempfile();
-        $write_info{'fh_label'}     =tempfile();
-        $write_info{'fh_fielddata'} =tempfile();
-        #($write_info{'fh_struct'}      ,undef)=tempfile('strXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_struct'};
-        #($write_info{'fh_field'}       ,undef)=tempfile('fieXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_field'};
-        #($write_info{'fh_label'}       ,undef)=tempfile('lblXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_label'};
-        #($write_info{'fh_fielddata'}   ,undef)=tempfile('fdaXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_fielddata'};
+        #$write_info{'fh_struct'}    =tempfile();
+        #$write_info{'fh_field'}     =tempfile();
+        #$write_info{'fh_label'}     =tempfile();
+        #$write_info{'fh_fielddata'} =tempfile();
+        ($write_info{'fh_struct'}      ,undef)=tempfile('strXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_struct'};
+        ($write_info{'fh_field'}       ,undef)=tempfile('fieXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_field'};
+        ($write_info{'fh_label'}       ,undef)=tempfile('lblXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_label'};
+        ($write_info{'fh_fielddata'}   ,undef)=tempfile('fdaXXXX',SUFFIX=>'.dat',UNLINK=>1); binmode $write_info{'fh_fielddata'};
 }
     syswrite $write_info{'fh_struct'}, pack('V',$struct->{'ID'});
     my $temp_fields_arr_ref=$struct->{'Fields'};
