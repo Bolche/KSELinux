@@ -1266,8 +1266,8 @@ sub Populate_Level1 {
 
 #read the PARTYTABLE.RES file
     my $pty_gff=Bioware::GFF->new();
-    unless (my $tmp=$pty_gff->read_gff_file("$registered_path/$gamedir/partytable.res")) {
-        die ("Could not read $registered_path/$gamedir/partytable.res");
+    unless (my $tmp=$pty_gff->read_gff_file("$registered_path/$gamedir/PARTYTABLE.res")) {
+        die ("Could not read $registered_path/$gamedir/PARTYTABLE.res");
     }
     my $credits=$pty_gff->{Main}{Fields}[$pty_gff->{Main}->get_field_ix_by_label('PT_GOLD')]{Value};
     my $partyxp=$pty_gff->{Main}{Fields}[$pty_gff->{Main}->get_field_ix_by_label('PT_XP_POOL')]{Value};
@@ -1304,14 +1304,14 @@ sub Populate_Level1 {
 
 #read the SAVEGAME.SAV file
 
-    my $erf=Bioware::ERF->new();                                            		        #create ERF for savegame.sav
-                                                                                                #read savegame.sav structure
-    unless (my $tmp=$erf->read_erf("$registered_path/$gamedir/savegame.sav")) {
-        die "Could not read $registered_path/$gamedir/savegame.sav";
+    my $erf=Bioware::ERF->new();                                            		        #create ERF for SAVEGAME.sav
+                                                                                                #read SAVEGAME.sav structure
+    unless (my $tmp=$erf->read_erf("$registered_path/$gamedir/SAVEGAME.sav")) {
+        die "Could not read $registered_path/$gamedir/SAVEGAME.sav";
     }
     my $tmpfil_inv;
     unless (($tmpfil_inv,$tmpfil_inv_name)=$erf->export_resource_to_temp_file("INVENTORY.res")) {                  #export inventory.res as a temp file
-        die "Could not find INVENTORY.res inside of $registered_path/$gamedir/savegame.sav";
+        die "Could not find INVENTORY.res inside of $registered_path/$gamedir/SAVEGAME.sav";
     }
     my $gff_inv=Bioware::GFF->new();                                                            #create GFF for inventory.res
     unless (my $tmp=$gff_inv->read_gff_file($tmpfil_inv_name)) {                             #read invenotry.res into GFF
@@ -1319,7 +1319,7 @@ sub Populate_Level1 {
     }
     my $tmpfil_sav;
     unless (($tmpfil_sav,$tmpfil_sav_name)=$erf->export_resource_to_temp_file("$last_module.sav")) {               #export the last module as a temp file
-        die "Could not find $last_module.sav inside of $registered_path/$gamedir/savegame.sav";
+        die "Could not find $last_module.sav inside of $registered_path/$gamedir/SAVEGAME.sav";
     }
     my $erf2=Bioware::ERF->new();                                                               #create ERF for last module
     unless (my $tmp=$erf2->read_erf($tmpfil_sav_name)) {                                     #read last module structure
@@ -1559,7 +1559,7 @@ sub Populate_Classes {
 	$gm =~ s#$1##;
 
 	$_ = $su;
-    #my $file_to_open="$registered_path/saves/".(split /#/,$treeitem)[1]."/savegame.sav";
+    #my $file_to_open="$registered_path/saves/".(split /#/,$treeitem)[1]."/SAVEGAME.sav";
     #unless (open SAV,"<",$file_to_open) { return; }
 
     # get our breadcrumbs
@@ -1978,7 +1978,7 @@ sub Populate_NPC{
     my $root='#'.$gameversion.'#'.(split /#/,$treeitem)[2];# print "\$root is: $root\n";
     my $datahash;
     my $influence;
-    #Get Influence from partytable.res for TSL
+    #Get Influence from PARTYTABLE.res for TSL
     if ($gameversion==2 || 3) {
         $datahash=$tree->entrycget($root,-data);
         my $pty_gff=$datahash->{'GFF-pty'};
@@ -2356,10 +2356,10 @@ sub CommitChanges {
     my $gamedir=(split /#/,$treeitem)[2];
     LogIt ("Committing changes for $gv->$gm");
 
-# write partytable.res
-    my $fn="$registered_path/$gamedir/partytable.res";
+# write PARTYTABLE.res
+    my $fn="$registered_path/$gamedir/PARTYTABLE.res";
     my $tot_pty_written=$pty_gff->write_gff_file($fn, 1);
-    if ($tot_pty_written==0) { die "Could not write to $registered_path/$gamedir/partytable.res" }
+    if ($tot_pty_written==0) { die "Could not write to $registered_path/$gamedir/PARTYTABLE.res" }
     LogIt ("Partytable updated. $tot_pty_written bytes written.");
 
 # write savenfo.res
@@ -2370,9 +2370,9 @@ sub CommitChanges {
 
 # write GLOBALVARS.res
     if (ref $gbl_gff eq 'Bioware::GFF') {
-       my $fn2a="$registered_path/$gamedir/globalvars.res";
+       my $fn2a="$registered_path/$gamedir/GLOBALVARS.res";
        my $tot_gbl_written=$gbl_gff->write_gff_file($fn2a, 1);
-       if ($tot_gbl_written==0) { die "Could not write to $registered_path/$gamedir/globalvars.res" }
+       if ($tot_gbl_written==0) { die "Could not write to $registered_path/$gamedir/GLOBALVARS.res" }
        LogIt ("GLOBALVARS.res updataed.  $tot_gbl_written bytes written.");
     }
 
@@ -2455,10 +2455,10 @@ sub CommitChanges {
 
 # write new erf_sav
     my $total_written;
-    unless ($total_written=$erf_sav->write_erf("$registered_path/$gamedir/savegame.sav")) {
-        die "Could not write to $registered_path/$gamedir/savegame.sav"
+    unless ($total_written=$erf_sav->write_erf("$registered_path/$gamedir/SAVEGAME.sav")) {
+        die "Could not write to $registered_path/$gamedir/SAVEGAME.sav"
     }
-    LogIt("$registered_path/$gamedir/savegame.sav written ($total_written bytes total)");
+    LogIt("$registered_path/$gamedir/SAVEGAME.sav written ($total_written bytes total)");
 
 
 # do .sig files if a .sig file exists in the game directory
@@ -2474,8 +2474,8 @@ if (scalar @tmpsig) {
     elsif ($gameversion==2) {
      $authkey=pack('C16',0x67,0x77,0x01,0x4b,0xb4,0xad,0xe4,0x21,0x8b,0x3d,0x98,0x67,0xa8,0xba,0x76,0x3c);
     }
-    my %gff_to_sig=qw(partytable.res SAVE_PARTY.sig
-                   globalvars.res SAVE_VARS.sig
+    my %gff_to_sig=qw(PARTYTABLE.res SAVE_PARTY.sig
+                   GLOBALVARS.res SAVE_VARS.sig
                    savenfo.res    SAVE_INFO.sig
                    screen.tga     Screen.sig);
     for my $f (keys %gff_to_sig) {
@@ -2493,12 +2493,12 @@ if (scalar @tmpsig) {
         LogIt ("$gff_to_sig{$f} created.");
     }
 
-    my $savegame_size= -s "$registered_path/$gamedir/savegame.sav";
+    my $savegame_size= -s "$registered_path/$gamedir/SAVEGAME.sav";
     #my $headerdata;
     my $headervardata;
     my $datadata;
     my %self;
-    (open my ($fh), "<", "$registered_path/$gamedir/savegame.sav") or (return 0);
+    (open my ($fh), "<", "$registered_path/$gamedir/SAVEGAME.sav") or (return 0);
     binmode $fh;
     #sysread $fh,$headerdata,160;
 
@@ -2546,7 +2546,7 @@ if (scalar @tmpsig) {
 
     $mw->Unbusy;
 
-    $mw->Dialog(-title=>'Save Successful',-text=>"File $registered_path/$gamedir/savegame.sav saved successfully.",-font=>['MS Sans Serif','8'],-buttons=>['Ok'])->Show();
+    $mw->Dialog(-title=>'Save Successful',-text=>"File $registered_path/$gamedir/SAVEGAME.sav saved successfully.",-font=>['MS Sans Serif','8'],-buttons=>['Ok'])->Show();
 }
 #>>>>>>>>>>>>>>>>>>>>>>>>
 sub SpawnFeatWidgets {
