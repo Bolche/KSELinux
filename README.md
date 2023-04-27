@@ -8,13 +8,34 @@ It may also work on Mac OS if you mess with some paths.
 
 ## Setting up
 
-You need a up-to-date Perl5 installation. Most Linux distros come with one.
+1. You need a up-to-date Perl5 installation. Most Linux distros come with one.
 
-1. Download this repository
-2. Create the file `kse.ini` in the directory *your_home_dir*/.config/kse/. You can use the file `kse.ini.sample` as a starting point
+For Ubuntu:
+```
+sudo apt install perl
+```
+
+2. Make sure the required perl modules are installed
+
+```
+cpan install
+    Data::Lazy \
+    Getopt::ArgvFile \
+    Module::ScanDeps \
+    PAR::Packer \
+    Tk \
+    Tk::Autoscroll \
+    Tk::DynaTabFrame \
+    Win32::AbsPath \
+    Win32::FileOp
+```
+
+3. Download this repository
+4. Create the file `kse.ini` in the directory *your_home_dir*/.config/kse/. You can use the file `kse.ini.sample` as a starting point
 > **Note:** **KPF**, the program that generates this file on Windows, can be easily compiled for Linux, but it usually gets the paths wrong and is uneeded for this hack.
-3. Install the needed perl modules, either with CPAN or with your repository's package manager. Most are shown in the original README (bellow), but I had to install some other modules not cited there. If you get an error about missing modules when you try to run, try to install it with CPAN. Obviously, ignore any module that start with "Win32".
-3. On the root of this repository, run `perl -I. kse.pl`
+5. Install the needed perl modules, either with CPAN or with your repository's package manager. Most are shown in the original README (bellow), but I had to install some other modules not cited there. If you get an error about missing modules when you try to run, try to install it with CPAN. Obviously, ignore any module that start with "Win32".
+6. On the root of this repository, run `perl -I. kse.pl`
+
 
 ## Running
 Just execute `perl -I. kse.pl` on the root folder of this repository.
