@@ -3,3 +3,4 @@ KSE_Errors.txt
 logs/*
 dist/*
 **/*.exe
+kse.ini
