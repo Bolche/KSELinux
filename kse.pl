@@ -415,6 +415,9 @@ if(-e $inilocation)
 #print $tjm_installed . "\n";
 
 #look for presence of save game folder
+# Uncomment one of the following lines if you have issues with game detection
+# $k1_installed = 1;
+# $k2_installed = 1;
 
 if ($k1_installed == 1)
 {
