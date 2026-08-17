@@ -57,6 +57,20 @@ our $x=900;
 our $y=600;
 
 our $bandaid=0;
+sub get_save_filepath {
+    my ($dir, $filename) = @_;
+    return "$dir/$filename" if -e "$dir/$filename";
+    if (opendir my $dh, $dir) {
+        my @files = readdir($dh);
+        closedir $dh;
+        for my $f (@files) {
+            if (lc($f) eq lc($filename)) {
+                return "$dir/$f";
+            }
+        }
+    }
+    return "$dir/$filename";
+}
 sub What;
 sub RWhat;
 sub Inventory;
@@ -1252,8 +1266,9 @@ sub Populate_Level1 {
     }
 #read the SAVENFO.RES file
     my $res_gff=Bioware::GFF->new();
-    unless (my $tmp=$res_gff->read_gff_file("$registered_path/$gamedir/savenfo.res")) {
-        die ("Could not read $registered_path/$gamedir/savenfo.res");
+    my $savenfo_file = get_save_filepath("$registered_path/$gamedir", "savenfo.res");
+    unless (my $tmp=$res_gff->read_gff_file($savenfo_file)) {
+        die ("Could not read $savenfo_file");
     }
     my $time_played=$res_gff->{Main}{Fields}[$res_gff->{Main}->get_field_ix_by_label('TIMEPLAYED')]{Value};
     my $area_name=$res_gff->{Main}{Fields}[$res_gff->{Main}->get_field_ix_by_label('AREANAME')]{Value};
@@ -1263,8 +1278,9 @@ sub Populate_Level1 {
 
 #read the PARTYTABLE.RES file
     my $pty_gff=Bioware::GFF->new();
-    unless (my $tmp=$pty_gff->read_gff_file("$registered_path/$gamedir/partytable.res")) {
-        die ("Could not read $registered_path/$gamedir/partytable.res");
+    my $partytable_file = get_save_filepath("$registered_path/$gamedir", "partytable.res");
+    unless (my $tmp=$pty_gff->read_gff_file($partytable_file)) {
+        die ("Could not read $partytable_file");
     }
     my $credits=$pty_gff->{Main}{Fields}[$pty_gff->{Main}->get_field_ix_by_label('PT_GOLD')]{Value};
     my $partyxp=$pty_gff->{Main}{Fields}[$pty_gff->{Main}->get_field_ix_by_label('PT_XP_POOL')]{Value};
@@ -1303,12 +1319,13 @@ sub Populate_Level1 {
 
     my $erf=Bioware::ERF->new();                                            		        #create ERF for savegame.sav
                                                                                                 #read savegame.sav structure
-    unless (my $tmp=$erf->read_erf("$registered_path/$gamedir/savegame.sav")) {
-        die "Could not read $registered_path/$gamedir/savegame.sav";
+    my $savegame_file = get_save_filepath("$registered_path/$gamedir", "savegame.sav");
+    unless (my $tmp=$erf->read_erf($savegame_file)) {
+        die "Could not read $savegame_file";
     }
     my $tmpfil_inv;
     unless (($tmpfil_inv,$tmpfil_inv_name)=$erf->export_resource_to_temp_file("INVENTORY.res")) {                  #export inventory.res as a temp file
-        die "Could not find INVENTORY.res inside of $registered_path/$gamedir/savegame.sav";
+        die "Could not find INVENTORY.res inside of $savegame_file";
     }
     my $gff_inv=Bioware::GFF->new();                                                            #create GFF for inventory.res
     unless (my $tmp=$gff_inv->read_gff_file($tmpfil_inv_name)) {                             #read invenotry.res into GFF
@@ -1316,7 +1333,7 @@ sub Populate_Level1 {
     }
     my $tmpfil_sav;
     unless (($tmpfil_sav,$tmpfil_sav_name)=$erf->export_resource_to_temp_file("$last_module.sav")) {               #export the last module as a temp file
-        die "Could not find $last_module.sav inside of $registered_path/$gamedir/savegame.sav";
+        die "Could not find $last_module.sav inside of $savegame_file";
     }
     my $erf2=Bioware::ERF->new();                                                               #create ERF for last module
     unless (my $tmp=$erf2->read_erf($tmpfil_sav_name)) {                                     #read last module structure
@@ -1494,33 +1511,51 @@ sub Read_Global_Vars{
     $tree->add($treeitem."#Numerics",-text=>"Numerics");
 
     my $gff=Bioware::GFF->new();
-    $gff->read_gff_file("$dir/GLOBALVARS.res");
+    my $gbl_file = get_save_filepath($dir, "globalvars.res");
+    unless (-e $gbl_file && $gff->read_gff_file($gbl_file)) {
+        LogIt("Could not read globalvars.res from $dir");
+        return;
+    }
 
     my %boogleans;
     my %numrics;
-    my $bitstring=unpack('B*',$gff->{Main}{Fields}[$gff->{Main}->get_field_ix_by_label('ValBoolean')]{'Value'});
-    my @bits=split //,$bitstring;
-    my $catboolean_ix=$gff->{Main}->get_field_ix_by_label('CatBoolean');
-    for (my $i=0; $i< scalar @{$gff->{Main}{Fields}[$catboolean_ix]{'Value'}}; $i++) {
-        my $kee=$gff->{Main}{Fields}[$catboolean_ix]{'Value'}[$i]{'Fields'}{'Value'}."__$i";
-        $boogleans{$kee}=$bits[$i];
+    my $valbool_ix = $gff->{Main}->get_field_ix_by_label('ValBoolean');
+    my $catboolean_ix = $gff->{Main}->get_field_ix_by_label('CatBoolean');
+    if (defined $valbool_ix && defined $catboolean_ix && defined $gff->{Main}{Fields}[$valbool_ix]{'Value'}) {
+        my $bitstring=unpack('B*',$gff->{Main}{Fields}[$valbool_ix]{'Value'});
+        my @bits=split //,$bitstring;
+        my $catbool_val = $gff->{Main}{Fields}[$catboolean_ix]{'Value'};
+        my $count = ref $catbool_val eq 'ARRAY' ? scalar @$catbool_val : 0;
+        for (my $i=0; $i < $count; $i++) {
+            my $field_val = $catbool_val->[$i]{'Fields'};
+            my $str_val = ref $field_val eq 'HASH' ? $field_val->{'Value'} : (ref $field_val eq 'ARRAY' && ref $field_val->[0] ? $field_val->[0]{'Value'} : ($field_val->{'Value'} // ""));
+            my $kee = $str_val . "__$i";
+            $boogleans{$kee}=$bits[$i];
+        }
+        for my $kee (sort keys %boogleans) {
+            my $keetxt=(split /__/,$kee)[0];
+            $tree->add("$treeitem#Booleans#$kee",-text=>"$keetxt: $boogleans{$kee}",-data=>'can modify');
+            $tree->hide('entry',"$treeitem#Booleans#$kee");
+        }
     }
-    for my $kee (sort keys %boogleans) {
-        my $keetxt=(split /__/,$kee)[0];
-        $tree->add("$treeitem#Booleans#$kee",-text=>"$keetxt: $boogleans{$kee}",-data=>'can modify');
-        $tree->hide('entry',"$treeitem#Booleans#$kee");
-    }
-    my $catnumber_ix=$gff->{Main}->get_field_ix_by_label('CatNumber');
-    my $catnumber_count=scalar @{$gff->{Main}{Fields}[$catnumber_ix]{'Value'}};
-    my @byts=unpack("C$catnumber_count",$gff->{Main}{Fields}[$gff->{Main}->get_field_ix_by_label('ValNumber')]{'Value'});
-    for (my $i=0; $i< scalar @{$gff->{Main}{Fields}[$catnumber_ix]{'Value'}}; $i++) {
-        my $kee=$gff->{Main}{Fields}[$catnumber_ix]{'Value'}[$i]{'Fields'}{'Value'}."__$i";
-        $numrics{$kee}=$byts[$i];
-    }
-    for my $kee (sort keys %numrics) {
-        my $keetxt=(split /__/,$kee)[0];
-        $tree->add("$treeitem#Numerics#$kee",-text=>"$keetxt: $numrics{$kee}",-data=>'can modify');
-        $tree->hide('entry',"$treeitem#Numerics#$kee");
+
+    my $valnum_ix = $gff->{Main}->get_field_ix_by_label('ValNumber');
+    my $catnumber_ix = $gff->{Main}->get_field_ix_by_label('CatNumber');
+    if (defined $valnum_ix && defined $catnumber_ix && defined $gff->{Main}{Fields}[$valnum_ix]{'Value'}) {
+        my $catnum_val = $gff->{Main}{Fields}[$catnumber_ix]{'Value'};
+        my $catnumber_count = ref $catnum_val eq 'ARRAY' ? scalar @$catnum_val : 0;
+        my @byts=unpack("C$catnumber_count",$gff->{Main}{Fields}[$valnum_ix]{'Value'});
+        for (my $i=0; $i < $catnumber_count; $i++) {
+            my $field_val = $catnum_val->[$i]{'Fields'};
+            my $str_val = ref $field_val eq 'HASH' ? $field_val->{'Value'} : (ref $field_val eq 'ARRAY' && ref $field_val->[0] ? $field_val->[0]{'Value'} : ($field_val->{'Value'} // ""));
+            my $kee = $str_val . "__$i";
+            $numrics{$kee}=$byts[$i];
+        }
+        for my $kee (sort keys %numrics) {
+            my $keetxt=(split /__/,$kee)[0];
+            $tree->add("$treeitem#Numerics#$kee",-text=>"$keetxt: $numrics{$kee}",-data=>'can modify');
+            $tree->hide('entry',"$treeitem#Numerics#$kee");
+        }
     }
     $tree->entryconfigure($treeitem,-data=>$gff);  #put this little token into my coat of many pockets
     $tree->autosetmode();
@@ -2354,22 +2389,22 @@ sub CommitChanges {
     LogIt ("Committing changes for $gv->$gm");
 
 # write partytable.res
-    my $fn="$registered_path/$gamedir/partytable.res";
+    my $fn = get_save_filepath("$registered_path/$gamedir", "partytable.res");
     my $tot_pty_written=$pty_gff->write_gff_file($fn, 1);
-    if ($tot_pty_written==0) { die "Could not write to $registered_path/$gamedir/partytable.res" }
+    if ($tot_pty_written==0) { die "Could not write to $fn" }
     LogIt ("Partytable updated. $tot_pty_written bytes written.");
 
 # write savenfo.res
-    my $fn2="$registered_path/$gamedir/savenfo.res";
+    my $fn2 = get_save_filepath("$registered_path/$gamedir", "savenfo.res");
     my $tot_res_written=$res_gff->write_gff_file($fn2, 1);
-    if ($tot_res_written==0) { die "Could not write to $registered_path/$gamedir/savenfo.res" }
+    if ($tot_res_written==0) { die "Could not write to $fn2" }
     LogIt ("Savenfo updated. $tot_res_written bytes written.");
 
 # write GLOBALVARS.res
     if (ref $gbl_gff eq 'Bioware::GFF') {
-       my $fn2a="$registered_path/$gamedir/globalvars.res";
+       my $fn2a = get_save_filepath("$registered_path/$gamedir", "globalvars.res");
        my $tot_gbl_written=$gbl_gff->write_gff_file($fn2a, 1);
-       if ($tot_gbl_written==0) { die "Could not write to $registered_path/$gamedir/globalvars.res" }
+       if ($tot_gbl_written==0) { die "Could not write to $fn2a" }
        LogIt ("GLOBALVARS.res updataed.  $tot_gbl_written bytes written.");
     }
 
@@ -2452,10 +2487,11 @@ sub CommitChanges {
 
 # write new erf_sav
     my $total_written;
-    unless ($total_written=$erf_sav->write_erf("$registered_path/$gamedir/savegame.sav")) {
-        die "Could not write to $registered_path/$gamedir/savegame.sav"
+    my $fn_sav = get_save_filepath("$registered_path/$gamedir", "savegame.sav");
+    unless ($total_written=$erf_sav->write_erf($fn_sav)) {
+        die "Could not write to $fn_sav"
     }
-    LogIt("$registered_path/$gamedir/savegame.sav written ($total_written bytes total)");
+    LogIt("$fn_sav written ($total_written bytes total)");
 
 
 # do .sig files if a .sig file exists in the game directory
@@ -2476,9 +2512,10 @@ if (scalar @tmpsig) {
                    savenfo.res    SAVE_INFO.sig
                    screen.tga     Screen.sig);
     for my $f (keys %gff_to_sig) {
-        next unless -e "$registered_path/$gamedir/$f";
+        my $actual_f = get_save_filepath("$registered_path/$gamedir", $f);
+        next unless -e $actual_f;
         local $/;
-        open my ($fh),"<","$registered_path/$gamedir/$f";
+        open my ($fh),"<",$actual_f;
         binmode $fh;
         my $data=<$fh>;
         close $fh;
@@ -2490,12 +2527,13 @@ if (scalar @tmpsig) {
         LogIt ("$gff_to_sig{$f} created.");
     }
 
-    my $savegame_size= -s "$registered_path/$gamedir/savegame.sav";
+    my $savegame_file = get_save_filepath("$registered_path/$gamedir", "savegame.sav");
+    my $savegame_size= -s $savegame_file;
     #my $headerdata;
     my $headervardata;
     my $datadata;
     my %self;
-    (open my ($fh), "<", "$registered_path/$gamedir/savegame.sav") or (return 0);
+    (open my ($fh), "<", $savegame_file) or (return 0);
     binmode $fh;
     #sysread $fh,$headerdata,160;
 
@@ -2543,7 +2581,7 @@ if (scalar @tmpsig) {
 
     $mw->Unbusy;
 
-    $mw->Dialog(-title=>'Save Successful',-text=>"File $registered_path/$gamedir/savegame.sav saved successfully.",-font=>['MS Sans Serif','8'],-buttons=>['Ok'])->Show();
+    $mw->Dialog(-title=>'Save Successful',-text=>"File $fn_sav saved successfully.",-font=>['MS Sans Serif','8'],-buttons=>['Ok'])->Show();
 }
 #>>>>>>>>>>>>>>>>>>>>>>>>
 sub SpawnFeatWidgets {
