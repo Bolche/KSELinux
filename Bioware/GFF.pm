@@ -118,7 +118,7 @@ sub write_gff($$;$) {      #DEPRECATED FUNCTION...
                            #writes gff to file
                            #this function should be called by a struct, not a GFF object
     my ($struct, $fn, $fh)=@_;
-    unless (ref $struct=="Bioware::GFF::Struct") {
+    unless (ref $struct eq "Bioware::GFF::Struct") {
         die "Not a Struct reference, use a different function --TK\n" . "ref: (ref $struct)"
     }
     $struct->writeStruct();
@@ -129,7 +129,7 @@ sub write_gff($$;$) {      #DEPRECATED FUNCTION...
 sub write_gff2($) {      #writes gff to file, GFF object
                          #warning uses File::Temp!
     my ($gff, $fn)=@_;
-    unless (ref $gff=="Bioware::GFF") {
+    unless (ref $gff eq "Bioware::GFF") {
         die "Not a GFF reference, use a different function --TK\n" . "ref: (ref $gff)"
     }
     my $struct=$gff->{Main};
@@ -141,7 +141,7 @@ sub write_gff2($) {      #writes gff to file, GFF object
 
 sub write_gff3($) {     #same as write_gff2 but uses Win32API::File::Temp
     my ($gff, $fn)=@_;
-    unless (ref $gff=="Bioware::GFF") {
+    unless (ref $gff eq "Bioware::GFF") {
         die "Not a GFF reference, use a different function --TK\n" . "ref: (ref $gff)"
     }
     my $struct=$gff->{Main};
@@ -675,6 +675,7 @@ sub writeStruct {
         $sizeof_fieldindices+=4*(scalar @$temp_fields_arr_ref);              #each fieldindex is a DWORD
         my $fieldindices_pack;                                               #we need to store this struct's fieldindices separate from other structs
         for my $field (@$temp_fields_arr_ref) {
+            next unless (ref $field && eval { $field->isa('Bioware::GFF::Field') });
             $fieldindices_pack .= pack('V',$write_info{'field_cnt'});        #write the field index (field count)
             $field->writeField();
         }
@@ -732,6 +733,7 @@ sub writeStruct2 {
         $sizeof_fieldindices+=4*(scalar @$temp_fields_arr_ref);              #each fieldindex is a DWORD
         my $fieldindices_pack;                                               #we need to store this struct's fieldindices separate from other structs
         for my $field (@$temp_fields_arr_ref) {
+            next unless (ref $field && eval { $field->isa('Bioware::GFF::Field') });
             $fieldindices_pack .= pack('V',$write_info{'field_cnt'});        #write the field index (field count)
             $field->writeField();
         }

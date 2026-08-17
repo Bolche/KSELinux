@@ -8,16 +8,41 @@ It may also work on Mac OS if you mess with some paths.
 
 ## Setting up
 
-You need a up-to-date Perl5 installation. Most Linux distros come with one.
+You need an up-to-date Perl5 installation with `Tk`. On modern Linux distros (with GCC 14+ and Perl 5.38+), installing `perl-tk` via your package manager is recommended to avoid CPAN C compiler deprecation errors.
 
-1. Download this repository
-2. Create the file `kse.ini` in the directory *your_home_dir*/.config/kse/. You can use the file `kse.ini.sample` as a starting point
-> **Note:** **KPF**, the program that generates this file on Windows, can be easily compiled for Linux, but it usually gets the paths wrong and is uneeded for this hack.
-3. Install the needed perl modules, either with CPAN or with your repository's package manager. Most are shown in the original README (bellow), but I had to install some other modules not cited there. If you get an error about missing modules when you try to run, try to install it with CPAN. Obviously, ignore any module that start with "Win32".
-3. On the root of this repository, run `perl -I. kse.pl`
+### 1. Install Perl & Tk packages
 
-## Running
-Just execute `perl -I. kse.pl` on the root folder of this repository.
+**Arch Linux / EndeavourOS:**
+```bash
+sudo pacman -S perl-tk perl-digest-hmac
+cpan install Tk::Autoscroll Tk::DynaTabFrame
+```
+
+**Ubuntu / Debian:**
+```bash
+sudo apt install perl perl-tk libdigest-hmac-perl
+cpan install Tk::Autoscroll Tk::DynaTabFrame
+```
+
+**Fedora:**
+```bash
+sudo dnf install perl-Tk perl-Digest-HMAC
+cpan install Tk::Autoscroll Tk::DynaTabFrame
+```
+
+### 2. Configure `kse.ini`
+Create `kse.ini` in `~/.config/kse/`. You can copy and edit `kse.ini.sample`:
+```bash
+mkdir -p ~/.config/kse
+cp kse.ini.sample ~/.config/kse/kse.ini
+```
+Edit `~/.config/kse/kse.ini` with your text editor to set your game and save paths.
+
+### 3. Running
+On the root of this repository, run:
+```bash
+perl -I. kse.pl
+```
 
 The original README.md follows.
 
